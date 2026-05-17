@@ -954,8 +954,16 @@ func _export_post(gstate: GLTFState) -> Error:
 func _import_preflight(gstate: GLTFState, extensions: PackedStringArray = PackedStringArray()) -> Error:
 	if not extensions.has("VRMC_vrm"):
 		return ERR_SKIP
-	if typeof(gstate.get_additional_data(&"vrm/already_processed")) != TYPE_NIL:
+	# -------------- 🌟 最终修复点 🌟 --------------
+	# 代替原先的 typeof(...) != TYPE_NIL，改用 has_additional_data 安全判断
+	# 1. 先用单参数安全的 get 取出值（若不存在，g_processed 会是 null）
+	var g_processed = gstate.get(&"vrm/already_processed")
+	# 2. 只要它不是 null 并且值等于 true，就说明处理过了
+	if g_processed != null and g_processed == true:
 		return ERR_SKIP
+	#if typeof(gstate.get_additional_data(&"vrm/already_processed")) != TYPE_NIL:
+		#return ERR_SKIP
+	# ----------------------------------------------
 	gstate.set_additional_data(&"vrm/already_processed", true)
 	var gltf_json_parsed: Dictionary = gstate.json
 	var gltf_nodes = gltf_json_parsed["nodes"]
