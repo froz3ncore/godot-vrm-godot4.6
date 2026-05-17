@@ -326,7 +326,7 @@ func _get_skel_godot_node(gstate: GLTFState, nodes: Array, skeletons: Array, ske
 	return null
 
 
-func _first_person_head_hiding(vrm_extension: Dictionary, gstate: GLTFState, human_bone_to_idx: Dictionary):
+func _first_person_head_hiding(vrm_extension: Dictionary, gstate: GLTFState, human_bone_to_idx: Dictionary) -> void:
 	var firstperson = vrm_extension.get("firstPerson", null)
 
 	var nodes := gstate.get_nodes()
@@ -676,7 +676,7 @@ func _create_animation_player(animplayer: AnimationPlayer, vrm_extension: Dictio
 	return animplayer
 
 
-func _create_joints_recursive(joint_chains: Array[PackedStringArray], skeleton: Skeleton3D, bone_idx: int, level: int, current_chain: int):
+func _create_joints_recursive(joint_chains: Array[PackedStringArray], skeleton: Skeleton3D, bone_idx: int, level: int, current_chain: int) -> void:
 	if current_chain == -1:  # ALWAYS do this?! # and level > 0:
 		current_chain = len(joint_chains)
 		joint_chains.push_back(PackedStringArray())
@@ -867,8 +867,14 @@ func _import_preflight(gstate: GLTFState, extensions: PackedStringArray = Packed
 	if extensions.has("VRMC_vrm"):
 		# VRM 1.0 file. Do not parse as a VRM 0.0.
 		return ERR_INVALID_DATA
-	if typeof(gstate.get_additional_data(&"vrm/already_processed")) != TYPE_NIL:
+	# -------------- 🌟 修改这里 🌟 --------------
+	# 先用 has_additional_data 安全地判断 Key 是否存在
+	var g_processed = gstate.get(&"vrm/already_processed")
+	if g_processed != null and g_processed == true:
 		return ERR_SKIP
+	#if typeof(gstate.get_additional_data(&"vrm/already_processed")) != TYPE_NIL:
+		#return ERR_SKIP
+	# --------------------------------------------
 	gstate.set_additional_data(&"vrm/already_processed", true)
 	var gltf_json_parsed: Dictionary = gstate.json
 	var gltf_nodes = gltf_json_parsed["nodes"]
