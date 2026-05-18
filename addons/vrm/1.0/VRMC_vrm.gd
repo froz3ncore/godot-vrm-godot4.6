@@ -313,7 +313,7 @@ func _create_animation_player(animplayer: AnimationPlayer, vrm_extension: Dictio
 		node.get_parent().remove_child(node)
 
 	var animation_library: AnimationLibrary = AnimationLibrary.new()
-
+	
 	var materials = gstate.get_materials()
 	var nodes = gstate.get_nodes()
 
@@ -503,7 +503,23 @@ func _create_animation_player(animplayer: AnimationPlayer, vrm_extension: Dictio
 
 	animation_library.add_animation(&"RESET", reset_anim)
 
+	#animplayer.add_animation_library("", animation_library)
+	# -------------- 🌟 Godot 4.6 真正的主动兼容层 🌟 --------------
+	# 1. 检查如果引擎占了空库，由于我们这次是纯新建，先干净地移出
+	if animplayer.has_animation_library(""):
+		animplayer.remove_animation_library("")
+	
+	# 2. 把我们塞满动画的库正式注册进去
 	animplayer.add_animation_library("", animation_library)
+	
+	# 3. 【最关键一步】强行让 AnimationMixer 在导入期刷新全套底层 C++ 缓存！
+	# 这能让 animplayer 提前拥有完整的轨道映射，用户之后在 UI 怎么折腾，指针都不会断！
+	if animplayer.has_method(&"clear_caches"):
+		animplayer.call(&"clear_caches") # 清除旧的断裂缓存
+	
+	# 触发混音器在当前的编辑器上下文里进行全量同步
+	animplayer.notify_property_list_changed()
+	# -------------------------------------------------------------
 	return animplayer
 
 
